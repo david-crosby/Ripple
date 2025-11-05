@@ -1,0 +1,27 @@
+services:
+  # MySQL database service
+  db:
+    image: mysql:8.0
+    container_name: fundraiser_db
+    restart: always
+    # Environment variables for MySQL configuration
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: fundraiser_dev
+      MYSQL_USER: fundraiser_user
+      MYSQL_PASSWORD: fundraiser_pass
+    ports:
+      # Expose MySQL on localhost:3306
+      - "3306:3306"
+    volumes:
+      # Persist data between container restarts
+      - mysql_data:/var/lib/mysql
+    # Health check to ensure MySQL is ready
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+volumes:
+  # Named volume for MySQL data persistence
+  mysql_data:
