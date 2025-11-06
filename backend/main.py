@@ -16,6 +16,9 @@ import os
 from database import engine, get_db, Base
 from models import User
 
+# Import routers
+from routers import auth, campaigns, givers
+
 # Load environment variables
 load_dotenv()
 
@@ -44,6 +47,12 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(campaigns.router)
+app.include_router(givers.router)
 
 
 # Root endpoint
@@ -108,6 +117,31 @@ def count_users(db: Session = Depends(get_db)):
     """
     count = db.query(User).count()
     return {"total_users": count}
+
+
+# Example protected endpoint
+@app.get("/protected")
+async def protected_route(current_user: User = Depends(auth.get_current_active_user)):
+    """
+    Example protected endpoint.
+    
+    This endpoint requires authentication - you must provide a valid JWT token.
+    Demonstrates how to protect routes and access the current user.
+    
+    Args:
+        current_user: Current authenticated user (injected by auth dependency)
+    
+    Returns:
+        Message personalised for the authenticated user
+        
+    Example:
+        Authorization: Bearer YOUR_JWT_TOKEN
+    """
+    return {
+        "message": f"Hello {current_user.username}!",
+        "user_id": current_user.id,
+        "email": current_user.email
+    }
 
 
 # Run the application
