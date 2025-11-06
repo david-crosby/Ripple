@@ -10,7 +10,7 @@ This module provides core authentication functionality:
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -28,10 +28,6 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-change-this")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-# Password hashing context using bcrypt
-# This handles all password hashing and verification
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme for token authentication
 # This tells FastAPI to look for a Bearer token in the Authorization header
@@ -51,7 +47,12 @@ def hash_password(password: str) -> str:
     Example:
         hashed = hash_password("mypassword123")
     """
-    return pwd_context.hash(password)
+    # Convert password to bytes and hash it
+    password_bytes = password.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    # Return as string for database storage
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -69,7 +70,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         if verify_password(input_password, user.hashed_password):
             # Password is correct
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    # Convert both to bytes for comparison
+    password_bytes = plain_password.encode('utf-8')
+    hashed_bytes = hashed_password.encode('utf-8')
+    return bcrypt.checkpw(password_bytes, hashed_bytes)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
