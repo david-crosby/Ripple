@@ -1,0 +1,323 @@
+# Ripple API Endpoints Reference
+
+Complete reference of all available API endpoints.
+
+## Base URL
+```
+http://localhost:8000
+```
+
+## Authentication Required
+Endpoints marked with 🔒 require a valid JWT token in the Authorization header:
+```
+Authorization: Bearer YOUR_JWT_TOKEN
+```
+
+---
+
+## Authentication
+
+### Register User
+```http
+POST /auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "username": "johndoe",
+  "password": "securepass123",
+  "full_name": "John Doe"
+}
+```
+**Response:** User object (auto-creates giver profile)
+
+### Login
+```http
+POST /auth/login
+Content-Type: application/x-www-form-urlencoded
+
+username=johndoe&password=securepass123
+```
+**Response:** JWT access token
+
+### Get Current User 🔒
+```http
+GET /auth/me
+Authorization: Bearer TOKEN
+```
+**Response:** Current user's profile
+
+### Logout
+```http
+POST /auth/logout
+```
+**Response:** Success message (client-side token removal)
+
+---
+
+## Campaigns
+
+### Create Campaign 🔒
+```http
+POST /campaigns/
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "title": "Build a Community Centre",
+  "description": "Long description here...",
+  "campaign_type": "fundraising",
+  "goal_amount": 50000.00,
+  "currency": "GBP",
+  "end_date": "2025-12-31T23:59:59Z"
+}
+```
+**Campaign Types:** `fundraising`, `event`, `adhoc_giving`  
+**Response:** Created campaign (status: DRAFT)
+
+### List Campaigns
+```http
+GET /campaigns/?campaign_type=fundraising&status=active&page=1&page_size=10
+```
+**Query Parameters:**
+- `campaign_type` - Filter by type (optional)
+- `status` - Filter by status (default: active)
+- `page` - Page number (default: 1)
+- `page_size` - Items per page (max 100, default: 10)
+
+**Response:** Paginated list of campaigns
+
+### Get Campaign
+```http
+GET /campaigns/{campaign_id}
+```
+**Response:** Campaign details
+
+### Update Campaign 🔒
+```http
+PUT /campaigns/{campaign_id}
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "title": "Updated Title",
+  "status": "active"
+}
+```
+**Note:** Only creator can update  
+**Response:** Updated campaign
+
+### Delete Campaign 🔒
+```http
+DELETE /campaigns/{campaign_id}
+Authorization: Bearer TOKEN
+```
+**Note:** Only creator can delete (soft delete - sets status to CANCELLED)  
+**Response:** 204 No Content
+
+### Get My Campaigns 🔒
+```http
+GET /campaigns/my/campaigns?page=1&page_size=10
+Authorization: Bearer TOKEN
+```
+**Response:** Paginated list of user's campaigns
+
+---
+
+## Giver Profiles
+
+### Create Profile 🔒
+```http
+POST /givers/profile
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "profile_type": "individual",
+  "bio": "Passionate about supporting communities",
+  "website_url": "https://example.com",
+  "is_public": true
+}
+```
+**Profile Types:** `individual`, `company`  
+**Note:** Usually auto-created on registration  
+**Response:** Created giver profile
+
+### Get My Profile 🔒
+```http
+GET /givers/profile/me
+Authorization: Bearer TOKEN
+```
+**Response:** Current user's giver profile with statistics
+
+### Update My Profile 🔒
+```http
+PUT /givers/profile/me
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "bio": "Updated biography",
+  "website_url": "https://newsite.com"
+}
+```
+**Response:** Updated giver profile
+
+### Get Public Profile
+```http
+GET /givers/profile/{user_id}
+```
+**Note:** Only returns if profile is public  
+**Response:** User's public giver profile
+
+### Get My Donations 🔒
+```http
+GET /givers/profile/me/donations?page=1&page_size=10
+Authorization: Bearer TOKEN
+```
+**Response:** Paginated donation history with total amount
+
+### Get Public Donations
+```http
+GET /givers/profile/{user_id}/donations?page=1&page_size=10
+```
+**Note:** Only non-anonymous donations from public profiles  
+**Response:** Paginated public donations
+
+### Giving Leaderboard
+```http
+GET /givers/leaderboard?limit=10&profile_type=individual
+```
+**Query Parameters:**
+- `limit` - Number of top givers (max 100, default: 10)
+- `profile_type` - Filter by individual/company (optional)
+
+**Response:** Top givers ranked by total donated
+
+---
+
+## Health & Info
+
+### Root
+```http
+GET /
+```
+**Response:** Welcome message and API info
+
+### Health Check
+```http
+GET /health
+```
+**Response:** API and database status
+
+### Protected Endpoint Example 🔒
+```http
+GET /protected
+Authorization: Bearer TOKEN
+```
+**Response:** Personalised message with user info
+
+---
+
+## Response Formats
+
+### Success Response
+```json
+{
+  "id": 1,
+  "title": "Campaign Title",
+  "status": "active",
+  "created_at": "2025-11-05T10:30:00Z"
+}
+```
+
+### Error Response
+```json
+{
+  "detail": "Error message here"
+}
+```
+
+### Paginated Response
+```json
+{
+  "campaigns": [...],
+  "total": 100,
+  "page": 1,
+  "page_size": 10
+}
+```
+
+---
+
+## Status Codes
+
+- `200` - Success
+- `201` - Created
+- `204` - No Content (successful deletion)
+- `400` - Bad Request (validation error)
+- `401` - Unauthorized (missing/invalid token)
+- `403` - Forbidden (not allowed to perform action)
+- `404` - Not Found
+- `422` - Validation Error (detailed field errors)
+
+---
+
+## Campaign Status Values
+
+- `draft` - Not yet published
+- `active` - Currently accepting donations
+- `completed` - Goal reached or ended successfully
+- `cancelled` - Cancelled by creator
+
+---
+
+## Payment Status Values
+
+- `pending` - Payment initiated but not confirmed
+- `completed` - Payment successful
+- `failed` - Payment failed
+- `refunded` - Payment refunded
+
+---
+
+## Interactive Documentation
+
+Visit the auto-generated API documentation:
+
+**Swagger UI:** http://localhost:8000/docs  
+**ReDoc:** http://localhost:8000/redoc
+
+These provide interactive API exploration with try-it-out functionality.
+
+---
+
+## Testing
+
+### Using cURL
+```bash
+# Get token
+TOKEN=$(curl -s -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "username=test&password=test123" \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
+
+# Use token
+curl -X GET "http://localhost:8000/campaigns/my/campaigns" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Using Test Scripts
+```bash
+# Test authentication
+./test_auth.sh
+
+# Test complete platform
+./test_campaigns.sh
+```
+
+### Using Swagger UI
+1. Go to http://localhost:8000/docs
+2. Click "Authorize" button
+3. Enter: `Bearer YOUR_TOKEN`
+4. Test any endpoint interactively

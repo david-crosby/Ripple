@@ -54,10 +54,14 @@ uv venv
 source .venv/bin/activate  # On macOS/Linux
 
 # Install dependencies (note the quotes around uvicorn[standard] for zsh)
-uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings
+uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart
 
 # Create your .env file from the example
 cp .env.example .env
+
+# IMPORTANT: Generate a secure secret key for JWT tokens
+# Run this command and copy the output to your .env file
+openssl rand -hex 32
 ```
 
 ### 3. Run the FastAPI Application
@@ -127,11 +131,110 @@ SELECT * FROM users;
 
 ## Next Steps
 
-1. **Add authentication** - Implement JWT-based authentication
-2. **Create more models** - Campaign, Donation, etc.
-3. **Add CRUD routes** - Create endpoints for managing resources
-4. **Set up the frontend** - Create React app with Vite
-5. **Integrate Stripe** - Add payment processing
+1. **Test the new features** - Run `./test_campaigns.sh` to test campaigns and givers
+2. **Add donation endpoints** - Create endpoints for processing donations
+3. **Integrate Stripe** - Add payment processing for donations
+4. **Add image uploads** - Integrate S3 for campaign images
+5. **Build the React frontend** - Create UI to interact with these endpoints
+6. **Add email notifications** - Notify users of donations and campaign updates
+
+## Authentication
+
+The backend now includes full JWT-based authentication with auto-generated giver profiles:
+
+### Available Endpoints:
+- `POST /auth/register` - Register a new user (auto-creates giver profile)
+- `POST /auth/login` - Login and get JWT token
+- `GET /auth/me` - Get current user info (protected)
+- `GET /protected` - Example protected endpoint
+
+### Campaign Management:
+- `POST /campaigns/` - Create a campaign (fundraising/event/adhoc)
+- `GET /campaigns/` - List campaigns with filters
+- `GET /campaigns/{id}` - Get campaign details
+- `PUT /campaigns/{id}` - Update campaign
+- `DELETE /campaigns/{id}` - Cancel campaign
+- `GET /campaigns/my/campaigns` - Get your campaigns
+
+### Giver Profiles & Donations:
+- `GET /givers/profile/me` - Get your giver profile
+- `PUT /givers/profile/me` - Update your profile
+- `GET /givers/profile/{user_id}` - View public profile
+- `GET /givers/profile/me/donations` - Your donation history
+- `GET /givers/leaderboard` - Top givers leaderboard
+
+### Quick Test:
+```bash
+# Run comprehensive test
+./test_campaigns.sh
+
+# Or test authentication only
+./test_auth.sh
+```
+
+**See [AUTHENTICATION.md](AUTHENTICATION.md) for detailed authentication guide.**
+
+## Campaign Types
+
+Ripple supports three types of campaigns:
+
+1. **Fundraising** - Traditional campaigns with goals and deadlines
+2. **Event** - Time-bound event fundraising (e.g., charity gala)
+3. **Ad-hoc Giving** - Simple one-time giving opportunities
+
+## Giver Profiles
+
+Every user automatically gets a giver profile that tracks:
+- Total donated amount
+- Number of donations
+- Giving history
+- Public/private visibility settings
+- Individual or company profile type
+
+## Project Structure
+
+```
+.
+├── docker-compose.yml    # MySQL database configuration
+├── AUTHENTICATION.md     # Authentication testing guide
+├── test_auth.sh          # Authentication test script
+├── test_campaigns.sh     # Comprehensive test script
+├── backend/
+│   ├── main.py          # FastAPI application entry point
+│   ├── database.py      # SQLAlchemy configuration
+│   ├── models.py        # Database models (User, Campaign, Donation, GiverProfile)
+│   ├── schemas.py       # Pydantic schemas for validation
+│   ├── auth.py          # Authentication utilities
+│   ├── routers/         # API route handlers
+│   │   ├── __init__.py
+│   │   ├── auth.py      # Authentication endpoints
+│   │   ├── campaigns.py # Campaign CRUD endpoints
+│   │   └── givers.py    # Giver profile & donation endpoints
+│   ├── pyproject.toml   # Project dependencies (uv)
+│   └── .env.example     # Environment variables template
+```
+
+## Database Models
+
+### User
+- Authentication and account management
+- One-to-many relationship with campaigns
+- One-to-one relationship with giver profile
+
+### Campaign
+- Three types: fundraising, event, adhoc_giving
+- Tracks goal amount, current amount, and status
+- Belongs to a creator (User)
+
+### GiverProfile
+- Individual or company profiles
+- Tracks total donated and donation count
+- Public/private visibility settings
+
+### Donation
+- Links givers to campaigns
+- Tracks payment status (pending/completed/failed/refunded)
+- Supports anonymous donations and messages
 
 ## Useful Commands
 
