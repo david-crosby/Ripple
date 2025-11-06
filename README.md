@@ -4,9 +4,11 @@ FastAPI backend for the fundraiser platform with MySQL database.
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.11+ (tested with Python 3.13)
 - Docker Desktop (for MySQL)
 - `uv` package manager
+
+**Note:** This project uses `bcrypt` directly (not `passlib`) for Python 3.13 compatibility.
 
 ## Project Structure
 
@@ -54,7 +56,7 @@ uv venv
 source .venv/bin/activate  # On macOS/Linux
 
 # Install dependencies (note the quotes around uvicorn[standard] for zsh)
-uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart email-validator
+uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings bcrypt 'python-jose[cryptography]' python-multipart email-validator
 
 # Create your .env file from the example
 cp .env.example .env
@@ -278,6 +280,13 @@ Make sure you're in the backend directory and the virtual environment is activat
 cd backend
 source .venv/bin/activate
 ```
+
+### Bcrypt / Python 3.13 compatibility
+
+If you encounter bcrypt errors with Python 3.13:
+- This project uses `bcrypt` directly (v4.0+) instead of `passlib`
+- If you see errors about `passlib`, uninstall it: `uv pip uninstall passlib`
+- Reinstall dependencies: `uv pip install bcrypt`
 
 ## Environment Variables
 
