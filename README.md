@@ -140,6 +140,29 @@ SELECT * FROM users;
 5. **Build the React frontend** - Create UI to interact with these endpoints
 6. **Add email notifications** - Notify users of donations and campaign updates
 
+## Testing
+
+### Run Tests
+```bash
+# Test authentication flow
+./test_auth.sh
+
+# Test complete platform (campaigns, givers, etc.)
+./test_campaigns.sh
+```
+
+### Clean Up Test Data
+```bash
+# Remove all test users and their data
+./cleanup_db.sh
+```
+
+The cleanup script safely removes:
+- Test users (usernames starting with `testuser_`)
+- Their giver profiles
+- Their campaigns
+- Their donations
+
 ## Authentication
 
 The backend now includes full JWT-based authentication with auto-generated giver profiles:

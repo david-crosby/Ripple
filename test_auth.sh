@@ -12,15 +12,23 @@ echo "================================"
 echo ""
 
 # Generate random username to avoid conflicts
+# Using timestamp + random for better uniqueness
+TIMESTAMP=$(date +%s)
 RANDOM_NUM=$RANDOM
-USERNAME="testuser${RANDOM_NUM}"
-EMAIL="test${RANDOM_NUM}@example.com"
-PASSWORD="testpass123"
+TEST_USER="testuser_${TIMESTAMP}_${RANDOM_NUM}"
+TEST_EMAIL="test_${TIMESTAMP}_${RANDOM_NUM}@example.com"
+TEST_PASSWORD="testpass123"
 
 echo "📝 Test credentials:"
-echo "   Username: $USERNAME"
-echo "   Email: $EMAIL"
-echo "   Password: $PASSWORD"
+echo "   Username: $TEST_USER"
+echo "   Email: $TEST_EMAIL"
+echo "   Password: $TEST_PASSWORD"
+echo ""
+
+# ==================== AUTHENTICATION ====================
+
+echo "🔐 AUTHENTICATION"
+echo "=================="
 echo ""
 
 # 1. Register
@@ -28,9 +36,9 @@ echo "1️⃣  Registering new user..."
 REGISTER_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${API_URL}/auth/register" \
   -H "Content-Type: application/json" \
   -d "{
-    \"email\": \"${EMAIL}\",
-    \"username\": \"${USERNAME}\",
-    \"password\": \"${PASSWORD}\",
+    \"email\": \"${TEST_EMAIL}\",
+    \"username\": \"${TEST_USER}\",
+    \"password\": \"${TEST_PASSWORD}\",
     \"full_name\": \"Test User\"
   }")
 
@@ -52,7 +60,7 @@ echo ""
 echo "2️⃣  Logging in..."
 TOKEN_RESPONSE=$(curl -s -X POST "${API_URL}/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=${USERNAME}&password=${PASSWORD}")
+  -d "username=${TEST_USER}&password=${TEST_PASSWORD}")
 
 # Extract access token
 ACCESS_TOKEN=$(echo $TOKEN_RESPONSE | python3 -c "import sys, json; print(json.load(sys.stdin)['access_token'])" 2>/dev/null)
