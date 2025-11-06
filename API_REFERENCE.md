@@ -196,6 +196,66 @@ GET /givers/leaderboard?limit=10&profile_type=individual
 
 ---
 
+## Donations
+
+### Create Donation 🔒
+```http
+POST /donations/
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "campaign_id": 1,
+  "amount": 50.00,
+  "currency": "GBP",
+  "is_anonymous": false,
+  "message": "Great cause! Happy to support."
+}
+```
+**Note:** Creates donation with PENDING status  
+**Response:** Created donation
+
+### Get Campaign Donations
+```http
+GET /donations/campaigns/{campaign_id}?include_anonymous=false&page=1&page_size=10
+```
+**Query Parameters:**
+- `include_anonymous` - Include anonymous donations (default: false)
+- `page` - Page number (default: 1)
+- `page_size` - Items per page (max 100, default: 10)
+
+**Note:** Only returns COMPLETED donations  
+**Response:** Paginated donations with total amount
+
+### Get Donation Details 🔒
+```http
+GET /donations/{donation_id}
+Authorization: Bearer TOKEN
+```
+**Note:** Only donor or campaign creator can view  
+**Response:** Donation details
+
+### Update Donation Status 🔒
+```http
+PATCH /donations/{donation_id}/status?payment_status=completed&payment_intent_id=pi_test_123
+Authorization: Bearer TOKEN
+```
+**Query Parameters:**
+- `payment_status` - New status (pending/completed/failed/refunded)
+- `payment_intent_id` - Optional Stripe payment intent ID
+
+**Note:** When marked as COMPLETED, automatically updates campaign current_amount and giver statistics  
+**Response:** Updated donation
+
+### Get My Donations 🔒
+```http
+GET /donations/my/donations?page=1&page_size=10
+Authorization: Bearer TOKEN
+```
+**Response:** Paginated donation history with total amount
+
+---
+
 ## Health & Info
 
 ### Root

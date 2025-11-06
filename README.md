@@ -133,12 +133,12 @@ SELECT * FROM users;
 
 ## Next Steps
 
-1. **Test the new features** - Run `./test_campaigns.sh` to test campaigns and givers
-2. **Add donation endpoints** - Create endpoints for processing donations
-3. **Integrate Stripe** - Add payment processing for donations
-4. **Add image uploads** - Integrate S3 for campaign images
-5. **Build the React frontend** - Create UI to interact with these endpoints
-6. **Add email notifications** - Notify users of donations and campaign updates
+1. **Test donations** - Run `./test_donations.sh` to test the complete donation flow
+2. **Integrate Stripe** - Add real payment processing for donations
+3. **Add image uploads** - Integrate S3 for campaign images
+4. **Build the React frontend** - Create UI to interact with these endpoints
+5. **Add email notifications** - Notify users of donations and campaign updates
+6. **Campaign updates feed** - Let campaigners post progress updates
 
 ## Testing
 
@@ -149,6 +149,9 @@ SELECT * FROM users;
 
 # Test complete platform (campaigns, givers, etc.)
 ./test_campaigns.sh
+
+# Test donations specifically
+./test_donations.sh
 ```
 
 ### Clean Up Test Data
@@ -188,10 +191,20 @@ The backend now includes full JWT-based authentication with auto-generated giver
 - `GET /givers/profile/me/donations` - Your donation history
 - `GET /givers/leaderboard` - Top givers leaderboard
 
+### Donations:
+- `POST /donations/` - Create a donation
+- `GET /donations/campaigns/{campaign_id}` - List campaign donations
+- `GET /donations/{donation_id}` - Get donation details
+- `PATCH /donations/{donation_id}/status` - Update payment status
+- `GET /donations/my/donations` - Your donation history
+
 ### Quick Test:
 ```bash
 # Run comprehensive test
 ./test_campaigns.sh
+
+# Test donations specifically
+./test_donations.sh
 
 # Or test authentication only
 ./test_auth.sh
@@ -222,8 +235,11 @@ Every user automatically gets a giver profile that tracks:
 .
 ├── docker-compose.yml    # MySQL database configuration
 ├── AUTHENTICATION.md     # Authentication testing guide
+├── DONATIONS.md          # Donation endpoints guide
 ├── test_auth.sh          # Authentication test script
 ├── test_campaigns.sh     # Comprehensive test script
+├── test_donations.sh     # Donation test script
+├── cleanup_db.sh         # Database cleanup utility
 ├── backend/
 │   ├── main.py          # FastAPI application entry point
 │   ├── database.py      # SQLAlchemy configuration
@@ -234,7 +250,8 @@ Every user automatically gets a giver profile that tracks:
 │   │   ├── __init__.py
 │   │   ├── auth.py      # Authentication endpoints
 │   │   ├── campaigns.py # Campaign CRUD endpoints
-│   │   └── givers.py    # Giver profile & donation endpoints
+│   │   ├── givers.py    # Giver profile & donation endpoints
+│   │   └── donations.py # Donation management endpoints
 │   ├── pyproject.toml   # Project dependencies (uv)
 │   └── .env.example     # Environment variables template
 ```

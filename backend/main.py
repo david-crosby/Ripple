@@ -17,7 +17,7 @@ from database import engine, get_db, Base
 from models import User
 
 # Import routers
-from routers import auth, campaigns, givers
+from routers import auth, campaigns, givers, donations
 
 # Load environment variables
 load_dotenv()
@@ -53,6 +53,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(campaigns.router)
 app.include_router(givers.router)
+app.include_router(donations.router)
 
 
 # Root endpoint
