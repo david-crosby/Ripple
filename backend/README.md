@@ -54,7 +54,7 @@ uv venv
 source .venv/bin/activate  # On macOS/Linux
 
 # Install dependencies (note the quotes around uvicorn[standard] for zsh)
-uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart
+uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart email-validator
 
 # Create your .env file from the example
 cp .env.example .env

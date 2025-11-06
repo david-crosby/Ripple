@@ -48,7 +48,7 @@ source .venv/bin/activate
 
 # Install dependencies
 echo "📚 Installing dependencies..."
-uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart
+uv pip install fastapi 'uvicorn[standard]' sqlalchemy pymysql cryptography python-dotenv pydantic pydantic-settings 'passlib[bcrypt]' 'python-jose[cryptography]' python-multipart email-validator
 
 echo ""
 echo "✨ Setup complete! Starting FastAPI server..."
