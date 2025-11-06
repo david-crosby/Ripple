@@ -25,7 +25,7 @@ echo ""
 
 # 1. Register
 echo "1️⃣  Registering new user..."
-REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/auth/register" \
+REGISTER_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${API_URL}/auth/register" \
   -H "Content-Type: application/json" \
   -d "{
     \"email\": \"${EMAIL}\",
@@ -34,8 +34,18 @@ REGISTER_RESPONSE=$(curl -s -X POST "${API_URL}/auth/register" \
     \"full_name\": \"Test User\"
   }")
 
+# Extract HTTP code and response body
+HTTP_CODE=$(echo "$REGISTER_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+REGISTER_BODY=$(echo "$REGISTER_RESPONSE" | sed '/HTTP_CODE:/d')
+
+if [ "$HTTP_CODE" != "201" ]; then
+    echo "❌ Registration failed with HTTP $HTTP_CODE!"
+    echo "$REGISTER_BODY" | python3 -m json.tool 2>/dev/null || echo "$REGISTER_BODY"
+    exit 1
+fi
+
 echo "✅ Registration successful!"
-echo "$REGISTER_RESPONSE" | python3 -m json.tool 2>/dev/null || echo "$REGISTER_RESPONSE"
+echo "$REGISTER_BODY" | python3 -m json.tool 2>/dev/null || echo "$REGISTER_BODY"
 echo ""
 
 # 2. Login

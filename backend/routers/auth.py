@@ -82,10 +82,9 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         is_verified=False  # Could implement email verification later
     )
     
-    # Add to database
+    # Add user to database and flush to get the ID
     db.add(new_user)
-    db.commit()
-    db.refresh(new_user)  # Refresh to get the auto-generated fields (id, created_at, etc.)
+    db.flush()  # Flush to get the user ID without committing
     
     # Automatically create a giver profile for the new user
     giver_profile = GiverProfile(
@@ -94,7 +93,10 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
         is_public=True
     )
     db.add(giver_profile)
+    
+    # Commit both user and profile together
     db.commit()
+    db.refresh(new_user)  # Refresh to get the auto-generated fields
     
     return new_user
 
