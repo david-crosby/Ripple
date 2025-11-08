@@ -78,7 +78,26 @@ export const AuthProvider = ({ children }) => {
       setUser(response.user);
       return response;
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Registration failed';
+      console.error('Registration error:', err);
+      console.error('Response data:', err.response?.data);
+      
+      let errorMessage = 'Registration failed';
+      
+      // Handle 422 validation errors
+      if (err.response?.status === 422) {
+        const details = err.response?.data?.detail;
+        if (Array.isArray(details)) {
+          // FastAPI validation errors are an array
+          errorMessage = details.map(e => `${e.loc?.join('.')}: ${e.msg}`).join(', ');
+        } else if (typeof details === 'string') {
+          errorMessage = details;
+        } else {
+          errorMessage = 'Validation error: Please check your input';
+        }
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      }
+      
       setError(errorMessage);
       throw new Error(errorMessage);
     }

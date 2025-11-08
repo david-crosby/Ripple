@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
-import { MockLocalStorage, mockUser, createMockError } from '../test/testUtils';
+import { MockLocalStorage, mockUser, createMockError } from '../test/testUtils.jsx';
 import * as api from '../services/api';
 
 // Mock the API module

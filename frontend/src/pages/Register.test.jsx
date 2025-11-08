@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Register from '../pages/Register';
-import { renderWithProviders, createMockError, MockLocalStorage } from '../test/testUtils';
+import { renderWithProviders, createMockError, MockLocalStorage } from '../test/testUtils.jsx';
 import * as api from '../services/api';
 
 // Mock the API module
@@ -47,18 +47,17 @@ describe('Register Component', () => {
       user: {
         id: 1,
         email: 'test@example.com',
-        first_name: 'Test',
-        last_name: 'User',
+        username: 'testuser',
+        full_name: 'Test User',
       },
     });
 
     renderWithProviders(<Register />);
 
     // Fill in form
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
+    await user.type(screen.getByLabelText(/full name/i), 'Test User');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/phone number/i), '+44 20 1234 5678');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
 
@@ -68,10 +67,9 @@ describe('Register Component', () => {
     // Verify API was called with correct data
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
-        first_name: 'Test',
-        last_name: 'User',
+        username: 'testuser',
+        full_name: 'Test User',
         email: 'test@example.com',
-        phone: '+44 20 1234 5678',
         password: 'password123',
       });
     });
@@ -90,8 +88,7 @@ describe('Register Component', () => {
 
     // Check for validation errors
     await waitFor(() => {
-      expect(screen.getByText(/first name is required/i)).toBeInTheDocument();
-      expect(screen.getByText(/last name is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/username is required/i)).toBeInTheDocument();
       expect(screen.getByText(/email is required/i)).toBeInTheDocument();
       expect(screen.getByText(/password is required/i)).toBeInTheDocument();
       expect(screen.getByText(/please confirm your password/i)).toBeInTheDocument();
@@ -110,8 +107,7 @@ describe('Register Component', () => {
     renderWithProviders(<Register />);
 
     // Fill in form with invalid email
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
     await user.type(screen.getByLabelText(/email address/i), 'notanemail');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
@@ -134,8 +130,7 @@ describe('Register Component', () => {
     renderWithProviders(<Register />);
 
     // Fill in form with short password
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'short');
     await user.type(screen.getByLabelText(/confirm password/i), 'short');
@@ -158,8 +153,7 @@ describe('Register Component', () => {
     renderWithProviders(<Register />);
 
     // Fill in form with mismatched passwords
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'differentpassword');
@@ -174,22 +168,21 @@ describe('Register Component', () => {
   });
 
   /**
-   * Test: Phone number is optional
+   * Test: Full name is optional
    */
-  it('successfully registers without phone number', async () => {
+  it('successfully registers without full name', async () => {
     const user = userEvent.setup();
     
     // Mock successful API response
     api.register.mockResolvedValueOnce({
       access_token: 'test-token',
-      user: { id: 1, email: 'test@example.com' },
+      user: { id: 1, email: 'test@example.com', username: 'testuser' },
     });
 
     renderWithProviders(<Register />);
 
-    // Fill in form without phone
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    // Fill in form without full name
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
@@ -197,11 +190,10 @@ describe('Register Component', () => {
     // Submit form
     await user.click(screen.getByRole('button', { name: /create account/i }));
 
-    // Verify API was called without phone
+    // Verify API was called without full_name
     await waitFor(() => {
       expect(api.register).toHaveBeenCalledWith({
-        first_name: 'Test',
-        last_name: 'User',
+        username: 'testuser',
         email: 'test@example.com',
         password: 'password123',
       });
@@ -209,18 +201,16 @@ describe('Register Component', () => {
   });
 
   /**
-   * Test: Validates phone number format if provided
+   * Test: Validates username length
    */
-  it('displays validation error for invalid phone format', async () => {
+  it('displays validation error for short username', async () => {
     const user = userEvent.setup();
     
     renderWithProviders(<Register />);
 
-    // Fill in form with invalid phone
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    // Fill in form with short username
+    await user.type(screen.getByLabelText(/username/i), 'ab');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
-    await user.type(screen.getByLabelText(/phone number/i), 'not-a-phone');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
 
@@ -229,7 +219,7 @@ describe('Register Component', () => {
 
     // Check for validation error
     await waitFor(() => {
-      expect(screen.getByText(/please enter a valid phone number/i)).toBeInTheDocument();
+      expect(screen.getByText(/username must be at least 3 characters/i)).toBeInTheDocument();
     });
   });
 
@@ -241,15 +231,14 @@ describe('Register Component', () => {
     
     // Mock failed API response
     api.register.mockRejectedValueOnce(
-      createMockError(400, 'Email already registered')
+      createMockError(400, 'Username already exists')
     );
 
     renderWithProviders(<Register />);
 
     // Fill in form
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
-    await user.type(screen.getByLabelText(/email address/i), 'existing@example.com');
+    await user.type(screen.getByLabelText(/username/i), 'existinguser');
+    await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');
 
@@ -258,7 +247,7 @@ describe('Register Component', () => {
 
     // Check for error message
     await waitFor(() => {
-      expect(screen.getByText(/email already registered/i)).toBeInTheDocument();
+      expect(screen.getByText(/username already exists/i)).toBeInTheDocument();
     });
   });
 
@@ -275,15 +264,15 @@ describe('Register Component', () => {
 
     // Verify error appears
     await waitFor(() => {
-      expect(screen.getByText(/first name is required/i)).toBeInTheDocument();
+      expect(screen.getByText(/username is required/i)).toBeInTheDocument();
     });
 
-    // Start typing in first name field
-    await user.type(screen.getByLabelText(/first name/i), 'T');
+    // Start typing in username field
+    await user.type(screen.getByLabelText(/username/i), 't');
 
     // Verify error is cleared
     await waitFor(() => {
-      expect(screen.queryByText(/first name is required/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/username is required/i)).not.toBeInTheDocument();
     });
   });
 
@@ -304,8 +293,7 @@ describe('Register Component', () => {
     renderWithProviders(<Register />);
 
     // Fill and submit form
-    await user.type(screen.getByLabelText(/first name/i), 'Test');
-    await user.type(screen.getByLabelText(/last name/i), 'User');
+    await user.type(screen.getByLabelText(/username/i), 'testuser');
     await user.type(screen.getByLabelText(/email address/i), 'test@example.com');
     await user.type(screen.getByLabelText(/^password$/i), 'password123');
     await user.type(screen.getByLabelText(/confirm password/i), 'password123');

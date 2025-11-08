@@ -95,7 +95,7 @@ npm run preview
 ## Project Structure
 
 ```
-ripple-frontend/
+qfrontend/
 ├── public/                 # Static assets
 ├── src/
 │   ├── components/        # Reusable React components

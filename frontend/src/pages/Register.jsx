@@ -14,11 +14,10 @@ const Register = () => {
   // Form state
   const [formData, setFormData] = useState({
     email: '',
+    username: '',
     password: '',
     confirmPassword: '',
-    first_name: '',
-    last_name: '',
-    phone: '',
+    full_name: '',
   });
   
   // UI state
@@ -57,14 +56,13 @@ const Register = () => {
   const validateForm = () => {
     const errors = {};
     
-    // First name validation
-    if (!formData.first_name.trim()) {
-      errors.first_name = 'First name is required';
-    }
-    
-    // Last name validation
-    if (!formData.last_name.trim()) {
-      errors.last_name = 'Last name is required';
+    // Username validation
+    if (!formData.username.trim()) {
+      errors.username = 'Username is required';
+    } else if (formData.username.length < 3) {
+      errors.username = 'Username must be at least 3 characters';
+    } else if (formData.username.length > 50) {
+      errors.username = 'Username must be less than 50 characters';
     }
     
     // Email validation
@@ -72,11 +70,6 @@ const Register = () => {
       errors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Please enter a valid email address';
-    }
-    
-    // Phone validation (optional, but validate format if provided)
-    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
-      errors.phone = 'Please enter a valid phone number';
     }
     
     // Password validation
@@ -115,16 +108,20 @@ const Register = () => {
       // Prepare data for API (exclude confirmPassword)
       const { confirmPassword, ...registrationData } = formData;
       
-      // Remove phone if empty
-      if (!registrationData.phone) {
-        delete registrationData.phone;
+      // Remove full_name if empty (it's optional)
+      if (!registrationData.full_name || !registrationData.full_name.trim()) {
+        delete registrationData.full_name;
       }
+      
+      // Debug: Log the data being sent
+      console.log('Sending registration data:', registrationData);
       
       await register(registrationData);
       // Navigation will happen automatically via ProtectedRoute
       navigate('/dashboard');
     } catch (err) {
       console.error('Registration failed:', err);
+      console.error('Error response:', err.response?.data);
       // Error is already set in AuthContext
     } finally {
       setLoading(false);
@@ -142,52 +139,52 @@ const Register = () => {
         {/* Display authentication error */}
         {error && (
           <div className="alert alert-error">
-            {error}
+            {typeof error === 'string' ? error : JSON.stringify(error)}
           </div>
         )}
 
         <form onSubmit={handleSubmit} noValidate>
-          {/* First name field */}
+          {/* Username field */}
           <div className="form-group">
-            <label htmlFor="first_name" className="form-label">
-              First Name
+            <label htmlFor="username" className="form-label">
+              Username
             </label>
             <input
-              id="first_name"
-              name="first_name"
+              id="username"
+              name="username"
               type="text"
-              autoComplete="given-name"
+              autoComplete="username"
               required
-              className={`form-input ${validationErrors.first_name ? 'error' : ''}`}
-              value={formData.first_name}
+              className={`form-input ${validationErrors.username ? 'error' : ''}`}
+              value={formData.username}
               onChange={handleChange}
               disabled={loading}
-              placeholder="John"
+              placeholder="johndoe"
             />
-            {validationErrors.first_name && (
-              <p className="form-error">{validationErrors.first_name}</p>
+            {validationErrors.username && (
+              <p className="form-error">{validationErrors.username}</p>
             )}
+            <p className="form-help">3-50 characters, used for login</p>
           </div>
 
-          {/* Last name field */}
+          {/* Full name field (optional) */}
           <div className="form-group">
-            <label htmlFor="last_name" className="form-label">
-              Last Name
+            <label htmlFor="full_name" className="form-label">
+              Full Name (optional)
             </label>
             <input
-              id="last_name"
-              name="last_name"
+              id="full_name"
+              name="full_name"
               type="text"
-              autoComplete="family-name"
-              required
-              className={`form-input ${validationErrors.last_name ? 'error' : ''}`}
-              value={formData.last_name}
+              autoComplete="name"
+              className={`form-input ${validationErrors.full_name ? 'error' : ''}`}
+              value={formData.full_name}
               onChange={handleChange}
               disabled={loading}
-              placeholder="Smith"
+              placeholder="John Doe"
             />
-            {validationErrors.last_name && (
-              <p className="form-error">{validationErrors.last_name}</p>
+            {validationErrors.full_name && (
+              <p className="form-error">{validationErrors.full_name}</p>
             )}
           </div>
 
@@ -210,27 +207,6 @@ const Register = () => {
             />
             {validationErrors.email && (
               <p className="form-error">{validationErrors.email}</p>
-            )}
-          </div>
-
-          {/* Phone field (optional) */}
-          <div className="form-group">
-            <label htmlFor="phone" className="form-label">
-              Phone Number (optional)
-            </label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              autoComplete="tel"
-              className={`form-input ${validationErrors.phone ? 'error' : ''}`}
-              value={formData.phone}
-              onChange={handleChange}
-              disabled={loading}
-              placeholder="+44 20 1234 5678"
-            />
-            {validationErrors.phone && (
-              <p className="form-error">{validationErrors.phone}</p>
             )}
           </div>
 

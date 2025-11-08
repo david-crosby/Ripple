@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from '../pages/Login';
-import { renderWithProviders, createMockError, MockLocalStorage } from '../test/testUtils';
+import { renderWithProviders, createMockError, MockLocalStorage } from '../test/testUtils.jsx';
 import * as api from '../services/api';
 
 // Mock the API module
