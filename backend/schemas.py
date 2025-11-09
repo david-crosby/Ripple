@@ -5,7 +5,7 @@ These schemas define the structure of data coming in (requests)
 and going out (responses) of the API endpoints.
 """
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 from decimal import Decimal
@@ -26,16 +26,14 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, description="Password (min 8 characters)")
     full_name: Optional[str] = Field(None, max_length=255, description="User's full name")
     
-    class Config:
-        # Example data for API documentation
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "username": "johndoe",
                 "password": "securepassword123",
                 "full_name": "John Doe"
             }
-        }
+        })
 
 
 # User login schema
@@ -48,13 +46,13 @@ class UserLogin(BaseModel):
     username: str = Field(..., description="Username or email")
     password: str = Field(..., description="Password")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "username": "johndoe",
                 "password": "securepassword123"
             }
         }
+    )
 
 
 # User response schema (public data only)
@@ -82,9 +80,7 @@ class UserResponse(BaseModel):
     is_verified: bool
     created_at: datetime
     
-    class Config:
-        # Allow reading data from ORM models
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Token response schema
@@ -97,13 +93,13 @@ class Token(BaseModel):
     access_token: str = Field(..., description="JWT access token")
     token_type: str = Field(default="bearer", description="Token type (always 'bearer')")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
                 "token_type": "bearer"
             }
         }
+    )
 
 
 # Token data schema (what's stored inside the JWT)
@@ -135,8 +131,7 @@ class UserUpdate(BaseModel):
     postal_code: Optional[str] = Field(None, max_length=20)
     country: Optional[str] = Field(None, max_length=100)
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "first_name": "John",
                 "last_name": "Doe",
@@ -148,6 +143,7 @@ class UserUpdate(BaseModel):
                 "country": "United Kingdom"
             }
         }
+    )
 
 
 # ==================== CAMPAIGN SCHEMAS ====================
@@ -174,8 +170,7 @@ class CampaignCreate(BaseModel):
     end_date: Optional[datetime] = Field(None, description="Campaign end date")
     image_url: Optional[str] = Field(None, max_length=500, description="Campaign image URL")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "title": "Help Build a Community Centre",
                 "description": "We're raising funds to build a new community centre that will serve...",
@@ -185,6 +180,7 @@ class CampaignCreate(BaseModel):
                 "end_date": "2025-12-31T23:59:59Z"
             }
         }
+    )
 
 
 class CampaignUpdate(BaseModel):
@@ -201,13 +197,13 @@ class CampaignUpdate(BaseModel):
     end_date: Optional[datetime] = None
     image_url: Optional[str] = Field(None, max_length=500)
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "title": "Updated Campaign Title",
                 "status": "active"
             }
         }
+    )
 
 
 class CampaignResponse(BaseModel):
@@ -239,8 +235,7 @@ class CampaignResponse(BaseModel):
             return float((self.current_amount / self.goal_amount) * 100)
         return None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CampaignListResponse(BaseModel):
@@ -252,8 +247,7 @@ class CampaignListResponse(BaseModel):
     page: int
     page_size: int
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "campaigns": [],
                 "total": 100,
@@ -261,6 +255,7 @@ class CampaignListResponse(BaseModel):
                 "page_size": 10
             }
         }
+    )
 
 
 # ==================== GIVER PROFILE SCHEMAS ====================
@@ -295,14 +290,14 @@ class GiverProfileCreate(BaseModel):
             raise ValueError('company_name is required for company profiles')
         return v
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "profile_type": "individual",
                 "bio": "Passionate about supporting local communities",
                 "is_public": True
             }
         }
+    )
 
 
 class GiverProfileUpdate(BaseModel):
@@ -316,13 +311,13 @@ class GiverProfileUpdate(BaseModel):
     website_url: Optional[str] = Field(None, max_length=500)
     is_public: Optional[bool] = None
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "bio": "Updated biography",
                 "website_url": "https://example.com"
             }
         }
+    )
 
 
 class GiverProfileResponse(BaseModel):
@@ -343,8 +338,7 @@ class GiverProfileResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== DONATION SCHEMAS ====================
@@ -368,8 +362,7 @@ class DonationCreate(BaseModel):
         description="Optional message from donor"
     )
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "campaign_id": 1,
                 "amount": 50.00,
@@ -378,6 +371,7 @@ class DonationCreate(BaseModel):
                 "message": "Great cause! Happy to support."
             }
         }
+   )
 
 
 class DonationResponse(BaseModel):
@@ -396,8 +390,7 @@ class DonationResponse(BaseModel):
     message: Optional[str]
     created_at: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DonationListResponse(BaseModel):
@@ -410,8 +403,7 @@ class DonationListResponse(BaseModel):
     page: int
     page_size: int
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "donations": [],
                 "total": 50,
@@ -420,3 +412,4 @@ class DonationListResponse(BaseModel):
                 "page_size": 10
             }
         }
+    )
