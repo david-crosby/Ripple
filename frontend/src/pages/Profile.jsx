@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { getMyGiverProfile, updateMyGiverProfile, getMyDonations } from '../services/api';
+import { getUserProfile, updateUserProfile, getMyDonations, getMyGiverProfile } from '../services/api';
 
 /**
  * Profile Page Component
@@ -13,6 +13,7 @@ const Profile = () => {
   
   // Profile data state
   const [profile, setProfile] = useState(null);
+  const [giverStats, setGiverStats] = useState({ total_donated: 0, donation_count: 0 });
   const [donations, setDonations] = useState([]);
   
   // Form state
@@ -49,9 +50,21 @@ const Profile = () => {
   const loadProfileData = async () => {
     setLoading(true);
     try {
-      // Load giver profile
-      const profileData = await getMyGiverProfile();
+      // Load user profile (personal details)
+      const profileData = await getUserProfile();
       setProfile(profileData);
+      
+      // Load giver profile for donation statistics
+      try {
+        const giverProfileData = await getMyGiverProfile();
+        setGiverStats({
+          total_donated: giverProfileData.total_donated || 0,
+          donation_count: giverProfileData.donation_count || 0
+        });
+      } catch (error) {
+        // Giver profile might not exist yet, use defaults
+        console.log('No giver profile found, using default stats');
+      }
       
       // Populate form with existing data
       setFormData({
@@ -67,9 +80,10 @@ const Profile = () => {
         country: profileData.country || '',
       });
       
-      // Load donation history
+      // Load donation history from giver profile endpoint
       const donationData = await getMyDonations(0, 10);
-      setDonations(donationData);
+      // Extract donations array from response object
+      setDonations(donationData.donations || []);
     } catch (error) {
       console.error('Error loading profile:', error);
       setMessage({
@@ -160,7 +174,7 @@ const Profile = () => {
         }
       });
       
-      const updatedProfile = await updateMyGiverProfile(updateData);
+      const updatedProfile = await updateUserProfile(updateData);
       setProfile(updatedProfile);
       
       // Update user in auth context if name or email changed
@@ -496,7 +510,7 @@ const Profile = () => {
                 <div className="profile-info-item">
                   <div className="profile-info-label">Total Donations</div>
                   <div className="profile-info-value text-success">
-                    {formatCurrency(profile.total_donated)}
+                    {formatCurrency(giverStats.total_donated)}
                   </div>
                 </div>
               </div>

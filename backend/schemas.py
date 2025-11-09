@@ -69,6 +69,15 @@ class UserResponse(BaseModel):
     email: EmailStr
     username: str
     full_name: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    phone: Optional[str]
+    address_line1: Optional[str]
+    address_line2: Optional[str]
+    city: Optional[str]
+    state: Optional[str]
+    postal_code: Optional[str]
+    country: Optional[str]
     is_active: bool
     is_verified: bool
     created_at: datetime
@@ -107,7 +116,7 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
-# User update schema (for future use)
+# User update schema
 class UserUpdate(BaseModel):
     """
     Schema for updating user information.
@@ -116,12 +125,27 @@ class UserUpdate(BaseModel):
     """
     email: Optional[EmailStr] = None
     full_name: Optional[str] = Field(None, max_length=255)
+    first_name: Optional[str] = Field(None, max_length=100)
+    last_name: Optional[str] = Field(None, max_length=100)
+    phone: Optional[str] = Field(None, max_length=20)
+    address_line1: Optional[str] = Field(None, max_length=255)
+    address_line2: Optional[str] = Field(None, max_length=255)
+    city: Optional[str] = Field(None, max_length=100)
+    state: Optional[str] = Field(None, max_length=100)
+    postal_code: Optional[str] = Field(None, max_length=20)
+    country: Optional[str] = Field(None, max_length=100)
     
     class Config:
         json_schema_extra = {
             "example": {
-                "email": "newemail@example.com",
-                "full_name": "John Smith"
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "john.doe@example.com",
+                "phone": "+44 7700 900000",
+                "address_line1": "123 Main Street",
+                "city": "London",
+                "postal_code": "SW1A 1AA",
+                "country": "United Kingdom"
             }
         }
 

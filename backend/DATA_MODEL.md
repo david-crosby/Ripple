@@ -28,13 +28,23 @@
 ## Models
 
 ### User
-**Purpose:** Authentication and account management
+**Purpose:** Authentication, account management, and user profile
 
 **Key Fields:**
 - `id` - Primary key
 - `email` - Unique email address
 - `username` - Unique username
 - `hashed_password` - Bcrypt hashed password
+- `full_name` - Full name (legacy field)
+- `first_name` - First name
+- `last_name` - Last name
+- `phone` - Phone number
+- `address_line1` - Street address line 1
+- `address_line2` - Street address line 2 (optional)
+- `city` - City
+- `state` - County/State
+- `postal_code` - Postal/ZIP code
+- `country` - Country
 - `is_active` - Account status
 - `is_verified` - Email verification status
 

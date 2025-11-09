@@ -55,6 +55,51 @@ POST /auth/logout
 
 ---
 
+## User Profile
+
+### Get My Profile 🔒
+```http
+GET /users/me
+Authorization: Bearer TOKEN
+```
+**Response:** Current user's profile with personal details
+
+### Update My Profile 🔒
+```http
+PUT /users/me
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john.doe@example.com",
+  "phone": "+44 7700 900000",
+  "address_line1": "123 Main Street",
+  "city": "London",
+  "postal_code": "SW1A 1AA",
+  "country": "United Kingdom"
+}
+```
+**Note:** All fields optional - update only what's provided  
+**Response:** Updated user profile
+
+### Get My Statistics 🔒
+```http
+GET /users/me/stats
+Authorization: Bearer TOKEN
+```
+**Response:** User donation statistics
+```json
+{
+  "total_donated": 500.00,
+  "donation_count": 10,
+  "has_giver_profile": true
+}
+```
+
+---
+
 ## Campaigns
 
 ### Create Campaign 🔒
@@ -126,31 +171,23 @@ Authorization: Bearer TOKEN
 
 ## Giver Profiles
 
-### Create Profile 🔒
+**Note:** Giver profiles track donation statistics and public giving information, separate from user personal details.
+
+### Get My Giver Profile 🔒
 ```http
-POST /givers/profile
+GET /givers/me
 Authorization: Bearer TOKEN
-Content-Type: application/json
-
-{
-  "profile_type": "individual",
-  "bio": "Passionate about supporting communities",
-  "website_url": "https://example.com",
-  "is_public": true
-}
 ```
-**Profile Types:** `individual`, `company`  
-**Note:** Usually auto-created on registration  
-**Response:** Created giver profile
+**Response:** Current user's giver profile with donation statistics
 
-### Get My Profile 🔒
+### Get My Giver Profile (Long Form) 🔒
 ```http
 GET /givers/profile/me
 Authorization: Bearer TOKEN
 ```
-**Response:** Current user's giver profile with statistics
+**Response:** Same as `/givers/me` - alternative endpoint
 
-### Update My Profile 🔒
+### Update My Giver Profile 🔒
 ```http
 PUT /givers/profile/me
 Authorization: Bearer TOKEN
@@ -158,9 +195,11 @@ Content-Type: application/json
 
 {
   "bio": "Updated biography",
-  "website_url": "https://newsite.com"
+  "website_url": "https://newsite.com",
+  "is_public": true
 }
 ```
+**Note:** Updates bio, website, and privacy settings (not personal details)  
 **Response:** Updated giver profile
 
 ### Get Public Profile
@@ -172,9 +211,22 @@ GET /givers/profile/{user_id}
 
 ### Get My Donations 🔒
 ```http
+GET /givers/me/donations?skip=0&limit=10
+Authorization: Bearer TOKEN
+```
+**Query Parameters:**
+- `skip` - Number of items to skip (default: 0)
+- `limit` - Items per page (max 100, default: 10)
+
+**Alternative:**
+```http
 GET /givers/profile/me/donations?page=1&page_size=10
 Authorization: Bearer TOKEN
 ```
+**Query Parameters:**
+- `page` - Page number (default: 1)
+- `page_size` - Items per page (max 100, default: 10)
+
 **Response:** Paginated donation history with total amount
 
 ### Get Public Donations

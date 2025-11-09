@@ -54,7 +54,16 @@ class User(Base):
         email: Unique email address for the user
         username: Unique username chosen by the user
         hashed_password: Bcrypt hashed password (never store plain text!)
-        full_name: User's full name
+        full_name: User's full name (legacy field)
+        first_name: User's first name
+        last_name: User's last name
+        phone: Phone number
+        address_line1: Street address line 1
+        address_line2: Street address line 2 (optional)
+        city: City
+        state: County/State
+        postal_code: Postal/ZIP code
+        country: Country
         is_active: Whether the account is active (for soft deletes/suspensions)
         is_verified: Whether the email has been verified
         created_at: Timestamp when the user registered
@@ -77,6 +86,17 @@ class User(Base):
     
     # User information
     full_name = Column(String(255), nullable=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    phone = Column(String(20), nullable=True)
+    
+    # Address information
+    address_line1 = Column(String(255), nullable=True)
+    address_line2 = Column(String(255), nullable=True)
+    city = Column(String(100), nullable=True)
+    state = Column(String(100), nullable=True)
+    postal_code = Column(String(20), nullable=True)
+    country = Column(String(100), nullable=True)
     
     # Account status flags
     is_active = Column(Boolean, default=True, nullable=False)

@@ -29,6 +29,46 @@ router = APIRouter(
 )
 
 
+@router.get("/me", response_model=GiverProfileResponse)
+def get_my_profile_shorthand(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the current user's giver profile (shorthand endpoint).
+    
+    Convenience endpoint that returns the authenticated user's giver profile.
+    This is the preferred endpoint for getting the current user's profile.
+    
+    Args:
+        current_user: Current authenticated user (injected)
+        db: Database session (injected)
+        
+    Returns:
+        Current user's giver profile
+        
+    Raises:
+        HTTPException 404: If profile not found
+        
+    Requires:
+        Valid JWT token
+        
+    Example:
+        GET /givers/me
+    """
+    profile = db.query(GiverProfile).filter(
+        GiverProfile.user_id == current_user.id
+    ).first()
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Giver profile not found. Create one first."
+        )
+    
+    return profile
+
+
 @router.post("/profile", response_model=GiverProfileResponse, status_code=status.HTTP_201_CREATED)
 def create_giver_profile(
     profile_data: GiverProfileCreate,
@@ -88,6 +128,87 @@ def create_giver_profile(
     db.refresh(new_profile)
     
     return new_profile
+
+
+@router.get("/me/donations", response_model=DonationListResponse)
+def get_my_donations_shorthand(
+    skip: Optional[int] = Query(None, ge=0, description="Number of items to skip"),
+    limit: Optional[int] = Query(None, ge=1, le=100, description="Number of items to return"),
+    page: Optional[int] = Query(None, ge=1, description="Page number (alternative to skip)"),
+    page_size: Optional[int] = Query(None, ge=1, le=100, description="Items per page (alternative to limit)"),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get the current user's donation history (shorthand endpoint).
+    
+    Returns a paginated list of all donations made by the current user.
+    Supports both skip/limit and page/page_size parameter styles.
+    
+    Args:
+        skip: Number of items to skip (for offset-based pagination)
+        limit: Number of items to return (for offset-based pagination)
+        page: Page number (for page-based pagination, starts at 1)
+        page_size: Items per page (for page-based pagination)
+        current_user: Current authenticated user (injected)
+        db: Database session (injected)
+        
+    Returns:
+        Paginated list of donations with total amount
+        
+    Requires:
+        Valid JWT token
+        
+    Examples:
+        GET /givers/me/donations?skip=0&limit=10
+        GET /givers/me/donations?page=1&page_size=10
+    """
+    # Get user's giver profile
+    profile = db.query(GiverProfile).filter(
+        GiverProfile.user_id == current_user.id
+    ).first()
+    
+    if not profile:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Giver profile not found"
+        )
+    
+    # Handle parameter conversion: support both skip/limit and page/page_size
+    if skip is not None or limit is not None:
+        # Using skip/limit style
+        offset = skip or 0
+        items_per_page = limit or 10
+        current_page = (offset // items_per_page) + 1
+    else:
+        # Using page/page_size style (default)
+        current_page = page or 1
+        items_per_page = page_size or 10
+        offset = (current_page - 1) * items_per_page
+    
+    # Build query for completed donations only
+    query = db.query(Donation).filter(
+        Donation.giver_id == profile.id,
+        Donation.payment_status == PaymentStatus.COMPLETED
+    )
+    
+    # Get total count and amount
+    total = query.count()
+    total_amount = db.query(func.sum(Donation.amount)).filter(
+        Donation.giver_id == profile.id,
+        Donation.payment_status == PaymentStatus.COMPLETED
+    ).scalar() or 0
+    
+    # Apply pagination
+    donations = query.order_by(desc(Donation.created_at)).offset(offset).limit(items_per_page).all()
+    
+    return {
+        "donations": donations,
+        "total": total,
+        "total_amount": total_amount,
+        "page": current_page,
+        "page_size": items_per_page
+    }
 
 
 @router.get("/profile/me", response_model=GiverProfileResponse)

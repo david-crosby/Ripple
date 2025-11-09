@@ -94,6 +94,48 @@ export const getCurrentUser = async () => {
 };
 
 // ============================================================================
+// User Profile API
+// ============================================================================
+
+/**
+ * Get the current user's profile
+ * @returns {Promise<Object>} User profile data
+ */
+export const getUserProfile = async () => {
+  const response = await api.get('/users/me');
+  return response.data;
+};
+
+/**
+ * Update the current user's profile
+ * @param {Object} profileData - Profile data to update
+ * @param {string} [profileData.first_name] - First name
+ * @param {string} [profileData.last_name] - Last name
+ * @param {string} [profileData.email] - Email address
+ * @param {string} [profileData.phone] - Phone number
+ * @param {string} [profileData.address_line1] - Address line 1
+ * @param {string} [profileData.address_line2] - Address line 2
+ * @param {string} [profileData.city] - City
+ * @param {string} [profileData.state] - State/County
+ * @param {string} [profileData.postal_code] - Postal code
+ * @param {string} [profileData.country] - Country
+ * @returns {Promise<Object>} Updated user profile
+ */
+export const updateUserProfile = async (profileData) => {
+  const response = await api.put('/users/me', profileData);
+  return response.data;
+};
+
+/**
+ * Get the current user's donation statistics
+ * @returns {Promise<Object>} User statistics including donation totals
+ */
+export const getUserStats = async () => {
+  const response = await api.get('/users/me/stats');
+  return response.data;
+};
+
+// ============================================================================
 // Giver Profile API
 // ============================================================================
 
@@ -108,21 +150,15 @@ export const getMyGiverProfile = async () => {
 
 /**
  * Update the current user's giver profile
- * @param {Object} profileData - Profile data to update
- * @param {string} [profileData.first_name] - First name
- * @param {string} [profileData.last_name] - Last name
- * @param {string} [profileData.email] - Email address
- * @param {string} [profileData.phone] - Phone number
- * @param {string} [profileData.address_line1] - Address line 1
- * @param {string} [profileData.address_line2] - Address line 2
- * @param {string} [profileData.city] - City
- * @param {string} [profileData.state] - State/Province
- * @param {string} [profileData.postal_code] - Postal code
- * @param {string} [profileData.country] - Country
+ * @param {Object} profileData - Giver profile data to update
+ * @param {string} [profileData.bio] - Biography or description
+ * @param {string} [profileData.website_url] - Website URL
+ * @param {boolean} [profileData.is_public] - Whether profile is public
+ * @param {string} [profileData.company_name] - Company name (for company profiles)
  * @returns {Promise<Object>} Updated giver profile
  */
 export const updateMyGiverProfile = async (profileData) => {
-  const response = await api.put('/givers/me', profileData);
+  const response = await api.put('/givers/profile/me', profileData);
   return response.data;
 };
 
