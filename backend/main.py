@@ -7,12 +7,16 @@ includes routers, and configures middleware.
 """
 
 import logging
-from fastapi import FastAPI, Depends
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from dotenv import load_dotenv
 import os
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Import database components
 from database import engine, get_db, Base, SessionLocal
@@ -35,6 +39,34 @@ logger = logging.getLogger(__name__)
 # This will create all tables defined in models.py if they don't exist
 Base.metadata.create_all(bind=engine)
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
+
+# Lifespan event handler (replaces deprecated on_event)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event handler for startup and shutdown events.
+
+    This replaces the deprecated @app.on_event("startup") and @app.on_event("shutdown").
+    """
+    # Startup: Check database connectivity
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        logger.info("✅ Database connection successful")
+    except Exception as e:
+        logger.error(f"❌ Database connection failed: {e}")
+        raise RuntimeError("Cannot connect to database") from e
+
+    yield
+
+    # Shutdown: Clean up resources (if needed in the future)
+    logger.info("Application shutting down")
+
+
 # Initialize FastAPI application
 app = FastAPI(
     title=os.getenv("APP_NAME", "Fundraiser Platform API"),
@@ -42,7 +74,12 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",  # Swagger UI available at /docs
     redoc_url="/redoc",  # ReDoc available at /redoc
+    lifespan=lifespan,  # Use lifespan handler instead of on_event
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS (Cross-Origin Resource Sharing)
 # This allows your React frontend to communicate with the backend
@@ -56,25 +93,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
-
-
-# Startup event - check database connectivity
-@app.on_event("startup")
-async def startup_event():
-    """
-    Check database connectivity on startup.
-    
-    Ensures the application can connect to the database
-    before accepting requests.
-    """
-    try:
-        db = SessionLocal()
-        db.execute(text("SELECT 1"))
-        db.close()
-        logger.info("✅ Database connection successful")
-    except Exception as e:
-        logger.error(f"❌ Database connection failed: {e}")
-        raise RuntimeError("Cannot connect to database") from e
 
 
 # Include routers

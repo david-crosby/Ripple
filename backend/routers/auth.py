@@ -7,10 +7,12 @@ This module contains all authentication-related endpoints:
 - Get current user info
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from database import get_db
 from models import User, GiverProfile, ProfileType
@@ -25,6 +27,9 @@ from auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+# Initialize rate limiter
+limiter = Limiter(key_func=get_remote_address)
+
 # Optional: Import logger if you've created the utils module
 # from utils.logger import get_logger
 # logger = get_logger(__name__)
@@ -37,28 +42,32 @@ router = APIRouter(
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/hour")  # Limit to 5 registrations per hour per IP
+def register_user(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register a new user.
-    
+
     Creates a new user account with the provided information.
     Passwords are automatically hashed before storing.
-    
+    Rate limited to 5 registrations per hour per IP address.
+
     Args:
+        request: FastAPI request object (for rate limiting)
         user_data: User registration data (email, username, password, etc.)
         db: Database session (injected)
-        
+
     Returns:
         Newly created user data (without password)
-        
+
     Raises:
         HTTPException 400: If username or email already exists
-        
+        HTTPException 429: If rate limit exceeded
+
     Example request body:
         {
             "email": "user@example.com",
             "username": "johndoe",
-            "password": "securepassword123",
+            "password": "SecurePass123",
             "full_name": "John Doe"
         }
     """
@@ -108,32 +117,37 @@ def register_user(user_data: UserCreate, db: Session = Depends(get_db)):
 
 
 @router.post("/login", response_model=Token)
+@limiter.limit("10/minute")  # Limit to 10 login attempts per minute per IP
 def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
     """
     User login endpoint.
-    
+
     Authenticates a user and returns a JWT access token.
     Uses OAuth2PasswordRequestForm which expects form data (not JSON).
-    
+    Rate limited to 10 login attempts per minute per IP address.
+
     Users can log in with either username or email in the 'username' field.
-    
+
     Args:
+        request: FastAPI request object (for rate limiting)
         form_data: OAuth2 form with username and password
         db: Database session (injected)
-        
+
     Returns:
         Access token and token type
-        
+
     Raises:
         HTTPException 401: If credentials are invalid
-        
+        HTTPException 429: If rate limit exceeded
+
     Example:
         POST /auth/login
         Content-Type: application/x-www-form-urlencoded
-        
+
         username=user@example.com&password=securepass123
     """
     # Authenticate the user

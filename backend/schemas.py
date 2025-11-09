@@ -18,19 +18,39 @@ from models import CampaignType, CampaignStatus, ProfileType, PaymentStatus
 class UserCreate(BaseModel):
     """
     Schema for user registration.
-    
+
     Used when a new user signs up.
     """
     email: EmailStr = Field(..., description="User's email address")
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
-    password: str = Field(..., min_length=8, description="Password (min 8 characters)")
+    password: str = Field(..., min_length=8, description="Password (min 8 characters, must include uppercase, lowercase, and number)")
     full_name: Optional[str] = Field(None, max_length=255, description="User's full name")
-    
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        """Validate password meets security requirements."""
+        from utils.validation import validate_password_strength
+        is_valid, error_message = validate_password_strength(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
+    @field_validator('username')
+    @classmethod
+    def validate_username_format(cls, v):
+        """Validate username format."""
+        from utils.validation import validate_username
+        is_valid, error_message = validate_username(v)
+        if not is_valid:
+            raise ValueError(error_message)
+        return v
+
     model_config = ConfigDict(json_schema_extra = {
             "example": {
                 "email": "user@example.com",
                 "username": "johndoe",
-                "password": "securepassword123",
+                "password": "SecurePass123",
                 "full_name": "John Doe"
             }
         })

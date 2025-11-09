@@ -49,22 +49,27 @@ def db():
 def client(db):
     """
     Provide a test client with test database.
-    
+
     Overrides the get_db dependency to use the test database
     instead of the production database.
+    Disables rate limiting for tests.
     """
     def override_get_db():
         try:
             yield db
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
+    # Disable rate limiting during tests
+    app.state.limiter.enabled = False
+
     with TestClient(app) as test_client:
         yield test_client
-    
+
     # Clean up
+    app.state.limiter.enabled = True
     app.dependency_overrides.clear()
 
 
