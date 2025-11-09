@@ -10,6 +10,7 @@ This module contains all authentication-related endpoints:
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from datetime import timedelta
 
 from database import get_db
 from models import User, GiverProfile, ProfileType
@@ -20,8 +21,13 @@ from auth import (
     create_access_token,
     get_current_active_user,
     get_user_by_username,
-    get_user_by_email
+    get_user_by_email,
+    ACCESS_TOKEN_EXPIRE_MINUTES
 )
+
+# Optional: Import logger if you've created the utils module
+# from utils.logger import get_logger
+# logger = get_logger(__name__)
 
 # Create router with prefix and tags for organisation
 router = APIRouter(
@@ -115,21 +121,22 @@ def login(
     Users can log in with either username or email in the 'username' field.
     
     Args:
-        form_data: OAuth2 form data with username and password
+        form_data: OAuth2 form with username and password
         db: Database session (injected)
         
     Returns:
-        JWT access token and token type
+        Access token and token type
         
     Raises:
         HTTPException 401: If credentials are invalid
         
-    Example (using curl):
-        curl -X POST "http://localhost:8000/auth/login" \\
-             -H "Content-Type: application/x-www-form-urlencoded" \\
-             -d "username=johndoe&password=securepassword123"
+    Example:
+        POST /auth/login
+        Content-Type: application/x-www-form-urlencoded
+        
+        username=user@example.com&password=securepass123
     """
-    # Authenticate user
+    # Authenticate the user
     user = authenticate_user(db, form_data.username, form_data.password)
     
     if not user:
@@ -140,55 +147,35 @@ def login(
         )
     
     # Create access token
-    # The "sub" (subject) claim is a standard JWT claim for user identification
-    access_token = create_access_token(data={"sub": user.username})
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username},
+        expires_delta=access_token_expires
+    )
     
-    return {
-        "access_token": access_token,
-        "token_type": "bearer"
-    }
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(current_user: User = Depends(get_current_active_user)):
+def get_current_user_info(
+    current_user: User = Depends(get_current_active_user)
+):
     """
     Get current authenticated user's information.
     
-    This is a protected endpoint that requires authentication.
-    Returns the profile of the currently logged-in user.
+    Returns the profile data of the currently authenticated user.
     
     Args:
-        current_user: Current authenticated user (injected from JWT token)
+        current_user: Current authenticated user (injected)
         
     Returns:
         Current user's profile data
         
     Requires:
-        Valid JWT token in Authorization header:
-        Authorization: Bearer <token>
+        Valid JWT token in Authorization header
         
-    Example (using curl):
-        curl -X GET "http://localhost:8000/auth/me" \\
-             -H "Authorization: Bearer YOUR_JWT_TOKEN"
+    Example:
+        GET /auth/me
+        Authorization: Bearer <token>
     """
     return current_user
-
-
-@router.post("/logout")
-async def logout():
-    """
-    Logout endpoint (placeholder).
-    
-    Note: With JWT tokens, logout is typically handled client-side
-    by simply removing the token. The server doesn't need to do anything.
-    
-    For more advanced logout (token blacklisting), you would need:
-    - Redis or similar cache to store invalidated tokens
-    - Middleware to check token against blacklist
-    
-    Returns:
-        Success message
-    """
-    return {
-        "message": "Successfully logged out. Please remove the token from your client."
-    }
