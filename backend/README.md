@@ -131,6 +131,26 @@ DESCRIBE users;
 SELECT * FROM users;
 ```
 
+### Database Migrations
+
+This project uses Alembic for database migrations and versioning:
+
+```bash
+# Create a new migration after changing models
+alembic revision --autogenerate -m "description of changes"
+
+# Apply all pending migrations
+alembic upgrade head
+
+# Rollback the last migration
+alembic downgrade -1
+
+# View migration history
+alembic history
+```
+
+**See [MIGRATIONS.md](MIGRATIONS.md) for comprehensive migration guide.**
+
 ## Next Steps
 
 1. **Test donations** - Run `./test_donations.sh` to test the complete donation flow
@@ -236,6 +256,7 @@ Every user automatically gets a giver profile that tracks:
 ├── docker-compose.yml    # MySQL database configuration
 ├── AUTHENTICATION.md     # Authentication testing guide
 ├── DONATIONS.md          # Donation endpoints guide
+├── MIGRATIONS.md         # Database migrations guide (Alembic)
 ├── test_auth.sh          # Authentication test script
 ├── test_campaigns.sh     # Comprehensive test script
 ├── test_donations.sh     # Donation test script
@@ -246,6 +267,10 @@ Every user automatically gets a giver profile that tracks:
 │   ├── models.py        # Database models (User, Campaign, Donation, GiverProfile)
 │   ├── schemas.py       # Pydantic schemas for validation
 │   ├── auth.py          # Authentication utilities
+│   ├── alembic/         # Database migration files
+│   │   ├── env.py       # Alembic environment configuration
+│   │   └── versions/    # Migration version files
+│   ├── alembic.ini      # Alembic configuration
 │   ├── routers/         # API route handlers
 │   │   ├── __init__.py
 │   │   ├── auth.py      # Authentication endpoints
