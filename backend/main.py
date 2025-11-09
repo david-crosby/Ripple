@@ -1,3 +1,4 @@
+
 """
 Main FastAPI application for the fundraiser platform.
 
@@ -5,6 +6,7 @@ This is the entry point for the backend API. It sets up the FastAPI app,
 includes routers, and configures middleware.
 """
 
+import logging
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -13,7 +15,7 @@ from dotenv import load_dotenv
 import os
 
 # Import database components
-from database import engine, get_db, Base
+from database import engine, get_db, Base, SessionLocal
 from models import User
 
 # Import routers
@@ -21,6 +23,13 @@ from routers import auth, campaigns, givers, donations, users
 
 # Load environment variables
 load_dotenv()
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Create database tables
 # This will create all tables defined in models.py if they don't exist
@@ -47,6 +56,25 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+
+# Startup event - check database connectivity
+@app.on_event("startup")
+async def startup_event():
+    """
+    Check database connectivity on startup.
+    
+    Ensures the application can connect to the database
+    before accepting requests.
+    """
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        logger.info("✅ Database connection successful")
+    except Exception as e:
+        logger.error(f"❌ Database connection failed: {e}")
+        raise RuntimeError("Cannot connect to database") from e
 
 
 # Include routers
@@ -115,46 +143,7 @@ def count_users(db: Session = Depends(get_db)):
         db: Database session injected by FastAPI's dependency injection
     
     Returns:
-        Dictionary with user count
+        Dictionary with count of users
     """
     count = db.query(User).count()
-    return {"total_users": count}
-
-
-# Example protected endpoint
-@app.get("/protected")
-async def protected_route(current_user: User = Depends(auth.get_current_active_user)):
-    """
-    Example protected endpoint.
-    
-    This endpoint requires authentication - you must provide a valid JWT token.
-    Demonstrates how to protect routes and access the current user.
-    
-    Args:
-        current_user: Current authenticated user (injected by auth dependency)
-    
-    Returns:
-        Message personalised for the authenticated user
-        
-    Example:
-        Authorization: Bearer YOUR_JWT_TOKEN
-    """
-    return {
-        "message": f"Hello {current_user.username}!",
-        "user_id": current_user.id,
-        "email": current_user.email
-    }
-
-
-# Run the application
-# Use this command in your terminal:
-# uvicorn main:app --reload --reload-exclude '.venv/*'
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,  # Auto-reload on code changes (development only)
-        reload_excludes=[".venv/*"]  # Exclude virtual environment from watching
-    )
+    return {"count": count}
