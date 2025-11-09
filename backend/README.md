@@ -186,13 +186,39 @@ The cleanup script safely removes:
 - Their campaigns
 - Their donations
 
+## Security Features
+
+The backend includes enterprise-grade security features to protect user accounts and prevent abuse:
+
+### Password Validation
+Strong password requirements enforced during registration:
+- Minimum 8 characters
+- At least one uppercase letter (A-Z)
+- At least one lowercase letter (a-z)
+- At least one number (0-9)
+- Cannot be a common password (e.g., "password123", "qwerty", etc.)
+
+### Rate Limiting
+Protection against brute force attacks and abuse:
+- **Registration**: 5 attempts per hour per IP address
+- **Login**: 10 attempts per minute per IP address
+- Returns HTTP 429 (Too Many Requests) when limit exceeded
+
+### Additional Security
+- **Bcrypt password hashing** - Secure password storage with automatic salt generation
+- **JWT token authentication** - Stateless authentication with configurable expiration (default: 30 minutes)
+- **Username validation** - Alphanumeric + underscores only, 3-50 characters, must start with letter
+- **SQL injection protection** - Parameterized queries via SQLAlchemy ORM
+
+**See [SECURITY.md](SECURITY.md) for detailed security documentation and testing.**
+
 ## Authentication
 
-The backend now includes full JWT-based authentication with auto-generated giver profiles:
+The backend includes full JWT-based authentication with auto-generated giver profiles:
 
 ### Available Endpoints:
-- `POST /auth/register` - Register a new user (auto-creates giver profile)
-- `POST /auth/login` - Login and get JWT token
+- `POST /auth/register` - Register a new user (auto-creates giver profile) - **Rate limited**
+- `POST /auth/login` - Login and get JWT token - **Rate limited**
 - `GET /auth/me` - Get current user info (protected)
 - `GET /protected` - Example protected endpoint
 
@@ -257,7 +283,10 @@ Every user automatically gets a giver profile that tracks:
 ├── AUTHENTICATION.md     # Authentication testing guide
 ├── DONATIONS.md          # Donation endpoints guide
 ├── MIGRATIONS.md         # Database migrations guide (Alembic)
+├── SECURITY.md           # Security features documentation
+├── TESTING.md            # Testing documentation and best practices
 ├── test_auth.sh          # Authentication test script
+├── test_security_manual.sh # Security features manual test script
 ├── test_campaigns.sh     # Comprehensive test script
 ├── test_donations.sh     # Donation test script
 ├── cleanup_db.sh         # Database cleanup utility

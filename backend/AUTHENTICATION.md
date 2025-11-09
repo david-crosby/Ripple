@@ -2,10 +2,31 @@
 
 Quick guide to test the authentication endpoints.
 
+## Security Features
+
+⚠️ **Important**: The authentication endpoints have security features enabled:
+
+### Password Requirements
+Passwords must meet these requirements:
+- Minimum 8 characters
+- At least one uppercase letter (A-Z)
+- At least one lowercase letter (a-z)
+- At least one number (0-9)
+- Cannot be a common password
+
+### Rate Limiting
+- **Registration**: Limited to 5 attempts per hour per IP
+- **Login**: Limited to 10 attempts per minute per IP
+- Exceeding limits returns HTTP 429 (Too Many Requests)
+
+See [SECURITY.md](SECURITY.md) for complete security documentation.
+
 ## Available Endpoints
 
 ### 1. Register a New User
-**POST** `/auth/register`
+**POST** `/auth/register` - **Rate Limited: 5/hour**
+
+**Password Requirements**: Must include uppercase, lowercase, and numbers.
 
 ```bash
 curl -X POST "http://localhost:8000/auth/register" \
@@ -13,12 +34,12 @@ curl -X POST "http://localhost:8000/auth/register" \
   -d '{
     "email": "test@example.com",
     "username": "testuser",
-    "password": "securepass123",
+    "password": "SecurePass123",
     "full_name": "Test User"
   }'
 ```
 
-**Response:**
+**Success Response (201):**
 ```json
 {
   "id": 1,
@@ -31,20 +52,55 @@ curl -X POST "http://localhost:8000/auth/register" \
 }
 ```
 
+**Validation Error Response (422):**
+```json
+{
+  "detail": [
+    {
+      "type": "value_error",
+      "loc": ["body", "password"],
+      "msg": "Value error, Password must contain at least one uppercase letter",
+      "input": "weakpassword"
+    }
+  ]
+}
+```
+
+**Rate Limit Error Response (429):**
+```json
+{
+  "error": "Rate limit exceeded: 5 per 1 hour"
+}
+```
+
 ### 2. Login
-**POST** `/auth/login`
+**POST** `/auth/login` - **Rate Limited: 10/minute**
 
 ```bash
 curl -X POST "http://localhost:8000/auth/login" \
   -H "Content-Type: application/x-www-form-urlencoded" \
-  -d "username=testuser&password=securepass123"
+  -d "username=testuser&password=SecurePass123"
 ```
 
-**Response:**
+**Success Response (200):**
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "bearer"
+}
+```
+
+**Invalid Credentials Response (401):**
+```json
+{
+  "detail": "Incorrect username or password"
+}
+```
+
+**Rate Limit Error Response (429):**
+```json
+{
+  "error": "Rate limit exceeded: 10 per 1 minute"
 }
 ```
 

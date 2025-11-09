@@ -24,18 +24,43 @@ Password validation is implemented in two places:
    - Reusable `validate_password_strength()` function
    - Can be used for password reset and change operations
 
-### Example
-```python
-# Valid password
-password = "SecurePass123"  # ✓ Has uppercase, lowercase, and numbers
+### Example Passwords
 
-# Invalid passwords
-password = "password"       # ✗ Too common
-password = "short1A"        # ✗ Too short
-password = "noupppercase1"  # ✗ No uppercase letter
-password = "NOLOWERCASE1"   # ✗ No lowercase letter
-password = "NoNumbers"      # ✗ No numbers
+**Valid Passwords** ✅
 ```
+SecurePass123
+MyP@ssw0rd!
+Tr0ub4dor&3
+C0mpl3x_P@ss
+Str0ng!Pass
+```
+
+**Invalid Passwords** ❌
+```
+password        → Too common
+short1A         → Too short (less than 8 characters)
+noupppercase1   → No uppercase letter
+NOLOWERCASE1    → No lowercase letter
+NoNumbers       → No numbers
+password123     → Common password (even with numbers)
+Password123     → Common password (lowercase version is common)
+12345678        → Common password (all numbers)
+qwerty123       → Common password
+Letmein1        → Common password
+```
+
+### Common Passwords List
+
+The following passwords are rejected (case-insensitive):
+- password, password123
+- 12345678, 1234567890
+- qwerty, abc123
+- monkey, letmein
+- trustno1, dragon
+- baseball, iloveyou
+- master, sunshine, ashley
+
+**Note**: In production, consider using the `zxcvbn` library for more comprehensive password strength checking.
 
 ## Rate Limiting
 
@@ -62,12 +87,36 @@ Rate limiting is configured in:
 3. When limit is exceeded, returns HTTP 429 (Too Many Requests)
 4. Limits reset after the specified time window
 
-### Response Example
-When rate limit is exceeded:
+### Response Examples
+
+**When rate limit is exceeded (HTTP 429):**
 ```json
 {
   "error": "Rate limit exceeded: 5 per 1 hour"
 }
+```
+
+**Response headers include rate limit information:**
+```
+X-RateLimit-Limit: 5
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1699200000
+Retry-After: 3600
+```
+
+### How Rate Limits Reset
+
+Rate limits use a sliding window approach:
+- **Registration (5/hour)**: Limit resets 60 minutes after first request
+- **Login (10/minute)**: Limit resets 60 seconds after first request
+
+**Example Timeline:**
+```
+10:00:00 - First registration request (count: 1/5)
+10:15:00 - Second registration request (count: 2/5)
+10:30:00 - Third registration request (count: 3/5)
+11:00:00 - First request limit resets (count: 2/5)
+11:15:00 - Second request limit resets (count: 1/5)
 ```
 
 ### Customizing Rate Limits

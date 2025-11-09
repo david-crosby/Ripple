@@ -13,32 +13,84 @@ Endpoints marked with 🔒 require a valid JWT token in the Authorization header
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
+## Rate Limiting
+Endpoints marked with ⚡ are rate limited:
+- Returns HTTP 429 (Too Many Requests) when limit exceeded
+- Rate limits are per IP address
+- See [SECURITY.md](SECURITY.md) for detailed rate limiting configuration
+
+## Security Features
+- **Password validation**: Strong passwords required (8+ chars, uppercase, lowercase, numbers)
+- **Rate limiting**: Protection against brute force attacks
+- **JWT tokens**: Secure authentication with 30-minute expiration
+- See [SECURITY.md](SECURITY.md) for complete security documentation
+
 ---
 
 ## Authentication
 
-### Register User
+### Register User ⚡
 ```http
 POST /auth/register
 Content-Type: application/json
+Rate Limit: 5 requests per hour per IP
 
 {
   "email": "user@example.com",
   "username": "johndoe",
-  "password": "securepass123",
+  "password": "SecurePass123",
   "full_name": "John Doe"
 }
 ```
-**Response:** User object (auto-creates giver profile)
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+- Cannot be a common password
 
-### Login
+**Username Requirements:**
+- 3-50 characters
+- Alphanumeric and underscores only
+- Must start with a letter
+
+**Response (201):** User object (auto-creates giver profile)
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "username": "johndoe",
+  "full_name": "John Doe",
+  "is_active": true,
+  "is_verified": false,
+  "created_at": "2024-11-05T10:30:00"
+}
+```
+
+**Error Responses:**
+- `422 Unprocessable Entity` - Validation error (weak password, invalid username)
+- `400 Bad Request` - Username or email already exists
+- `429 Too Many Requests` - Rate limit exceeded
+
+### Login ⚡
 ```http
 POST /auth/login
 Content-Type: application/x-www-form-urlencoded
+Rate Limit: 10 requests per minute per IP
 
-username=johndoe&password=securepass123
+username=johndoe&password=SecurePass123
 ```
-**Response:** JWT access token
+**Response (200):** JWT access token
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+**Error Responses:**
+- `401 Unauthorized` - Invalid credentials
+- `429 Too Many Requests` - Rate limit exceeded
 
 ### Get Current User 🔒
 ```http
